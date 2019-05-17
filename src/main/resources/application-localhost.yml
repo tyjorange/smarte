@@ -1,0 +1,45 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /PowerManager
+#redis配置
+redis-host: localhost
+redis-port: 6379
+redis-expire-time: 1800
+spring:
+  #mysql配置
+  datasource:
+    db1:
+      url: jdbc:mysql://localhost:3306/power_manager?useSSL=false
+      username: root
+      password: root123456
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    db2:
+      url: jdbc:mysql://localhost:3306/power_manager_user?useSSL=false
+      username: root
+      password: root123456
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    initialSize: 10
+    maxActive: 200
+    maxWait: 60000
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 30000
+    minIdle: 10
+    validationQuery: select 1
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    poolPreparedStatements: false
+    filters: stat,wall,slf4j
+    slowSqlMillis: 5000
+    logSlowSql: true
+    mergeSql: true
+    aop-patterns: com.rogy.smarte.controller.*
+  #jpa配置
+  jpa:
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL5Dialect
+    show-sql: false
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate

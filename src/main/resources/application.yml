@@ -1,0 +1,12 @@
+spring:
+  profiles:
+    active: dev
+#host: 116.62.38.203:8080
+host: 192.168.2.120:8080
+#host=http://www.solarstem.cn/picture
+host_user: ${host}/picture/user/
+host_userUrl: ${host}/picture/userUrl/
+prefix: D:/powerManager/picture
+#prefix: /usr/local/powerManager/picture
+prefix_user: ${prefix}/user/
+prefix_userUrl: ${prefix}/userUrl/

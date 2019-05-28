@@ -45,16 +45,16 @@ public class DruidDataSourceConfig {
     @Value("${spring.datasource.mergeSql}")
     private String mergeSql;
 
-    @Bean(name = "DataSource_1")
+    @Bean(name = "DataSource_1", initMethod = "init", destroyMethod = "close")
     @Primary
     @ConfigurationProperties(prefix = "spring.datasource.db1")
-    public DataSource getDataSourceDB1() throws SQLException {
+    public DruidDataSource getDataSourceDB1() throws SQLException {
         return this.getDataSource();
     }
 
-    @Bean(name = "DataSource_2")
+    @Bean(name = "DataSource_2", initMethod = "init", destroyMethod = "close")
     @ConfigurationProperties(prefix = "spring.datasource.db2")
-    public DataSource getDataSourceDB2() throws SQLException {
+    public DruidDataSource getDataSourceDB2() throws SQLException {
         return this.getDataSource();
     }
 
@@ -64,7 +64,7 @@ public class DruidDataSourceConfig {
      * @return 连接池对象
      * @throws SQLException e
      */
-    private DataSource getDataSource() throws SQLException {
+    private DruidDataSource getDataSource() throws SQLException {
         DruidDataSource druidDataSource = DruidDataSourceBuilder.create().build();
         druidDataSource.setInitialSize(initialSize);
         druidDataSource.setMaxActive(maxActive);

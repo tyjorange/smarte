@@ -6,6 +6,8 @@ import com.rogy.smarte.util.Aes128;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -17,17 +19,16 @@ import java.util.UUID;
 /**
  * 设备操作接口类。
  */
+@Component
 public class VirtualFsuController {
     /**
      * 断路器控制命令执行对象。
      */
-    public static CollectorCommandExecutor collectorCommandExecutor =
-            new CollectorCommandExecutor(VirtualFsuUtil.executorService);
+    public final CollectorCommandExecutor collectorCommandExecutor;
     /**
      * 断路器定时操作执行对象。
      */
-    public static BreakerTimerExecutor breakerTimerExecutor =
-            new BreakerTimerExecutor(VirtualFsuUtil.scheduledExecutorService);
+    public final BreakerTimerExecutor breakerTimerExecutor;
     /**
      * 最大上传个数。
      */
@@ -47,263 +48,269 @@ public class VirtualFsuController {
      */
     public static int BREAKER_FAULT_WAITMS = 500;
 
-	private VirtualFsuController() {
-	}
+    @Autowired
+    private VirtualFsuController(CollectorCommandExecutor collectorCommandExecutor, BreakerTimerExecutor breakerTimerExecutor) {
+        this.collectorCommandExecutor = collectorCommandExecutor;
+        this.breakerTimerExecutor = breakerTimerExecutor;
+    }
 
-	/**
-	 * 断路器操作。
-	 * @param switchID 断路器ID。
-	 * @param cmdData 操作命令(0=断闸;1=合闸)。
-	 * @param source 来源(0=远程执行;1=定时执行)。
-	 * @return 返回对应的Controller记录。null表示失败。
-	 */
-	public static Controller switchControl(int switchID, byte cmdData, byte source) {
-		Switch swt = null;
-		try {
-			swt = VirtualFsuUtil.virtualFsuService.findSwitchBySwitchID(switchID);	// 对应的断路器
-		} catch (Exception e) {
-			swt = null;
-			e.printStackTrace();
-		}
-		if(swt == null)
-			return null;
-		return switchControl(swt, cmdData, source);
-	}
+    /**
+     * 断路器操作。
+     *
+     * @param switchID 断路器ID。
+     * @param cmdData  操作命令(0=断闸;1=合闸)。
+     * @param source   来源(0=远程执行;1=定时执行)。
+     * @return 返回对应的Controller记录。null表示失败。
+     */
+    public Controller switchControl(int switchID, byte cmdData, byte source) {
+        Switch swt = null;
+        try {
+            swt = VirtualFsuUtil.virtualFsuService.findSwitchBySwitchID(switchID);    // 对应的断路器
+        } catch (Exception e) {
+            swt = null;
+            e.printStackTrace();
+        }
+        if (swt == null)
+            return null;
+        return switchControl(swt, cmdData, source);
+    }
 
-	/**
-	 * 断路器操作。
-	 * @param swt 断路器对象。
-	 * @param cmdData 操作命令(0=断闸;1=合闸)。
-	 * @param source 来源(0=远程执行;1=定时执行)。
-	 * @return 返回对应的Controller记录。null表示失败。
-	 */
-	public static Controller switchControl(final Switch swt, byte cmdData, byte source) {
-		if((cmdData != 0 && cmdData != 1) ||
-				(source != 0 && source != 1))
-			return null;
-		Controller controller = null;
-		try {
-			// 生成对应的Controller记录。
-			controller = new Controller();
-			controller.setControllerID(0L);
-			controller.setTargetType((byte) 0);	// 断路器
-			controller.setTargetID(swt.getSwitchID());
-			Timestamp tsNow = Timestamp.valueOf(LocalDateTime.now());
-			controller.setGenTime(tsNow);
-			controller.setRunTime(tsNow);
-			controller.setCmdData(cmdData);
-			controller.setSource(source);
-			controller.setRunCode("0");
-			controller.setRunResult(0);
-			controller = VirtualFsuUtil.virtualFsuService.addOrUpdateControllerResult(controller);
-			//System.out.printf("[%s] switchControl - new controller(%d)\n", LocalDateTime.now(), controller.getControllerID());
-			// 提交执行
-			boolean bret = doBreakerControl(controller, swt);
-			if(!bret) {	// 提交执行失败
-				controller.setRunCode("1");
-				controller = VirtualFsuUtil.virtualFsuService.addOrUpdateControllerResult(controller);
-			}
-		} catch(Exception e) {
-			controller = null;
-			e.printStackTrace();
-		}
-		return controller;
-	}
+    /**
+     * 断路器操作。
+     *
+     * @param swt     断路器对象。
+     * @param cmdData 操作命令(0=断闸;1=合闸)。
+     * @param source  来源(0=远程执行;1=定时执行)。
+     * @return 返回对应的Controller记录。null表示失败。
+     */
+    public Controller switchControl(final Switch swt, byte cmdData, byte source) {
+        if ((cmdData != 0 && cmdData != 1) ||
+                (source != 0 && source != 1))
+            return null;
+        Controller controller = null;
+        try {
+            // 生成对应的Controller记录。
+            controller = new Controller();
+            controller.setControllerID(0L);
+            controller.setTargetType((byte) 0);    // 断路器
+            controller.setTargetID(swt.getSwitchID());
+            Timestamp tsNow = Timestamp.valueOf(LocalDateTime.now());
+            controller.setGenTime(tsNow);
+            controller.setRunTime(tsNow);
+            controller.setCmdData(cmdData);
+            controller.setSource(source);
+            controller.setRunCode("0");
+            controller.setRunResult(0);
+            controller = VirtualFsuUtil.virtualFsuService.addOrUpdateControllerResult(controller);
+            //System.out.printf("[%s] switchControl - new controller(%d)\n", LocalDateTime.now(), controller.getControllerID());
+            // 提交执行
+            boolean bret = doBreakerControl(controller, swt);
+            if (!bret) {    // 提交执行失败
+                controller.setRunCode("1");
+                controller = VirtualFsuUtil.virtualFsuService.addOrUpdateControllerResult(controller);
+            }
+        } catch (Exception e) {
+            controller = null;
+            e.printStackTrace();
+        }
+        return controller;
+    }
 
-	/**
-	 * 场景执行。
-	 * @param scene 场景。
-	 * @param source 来源(0=远程执行;1=定时执行)。
-	 * @return 返回对应的Controller记录。null表示失败。
-	 */
-	public static Controller sceneControl(final Scene scene, byte source) {
-		if(scene == null ||
-				(source != 0 && source != 1))
-			return null;
-		Controller controller = null;
-		try {
-			// 生成对应的Controller记录。
-			controller = new Controller();
-			controller.setControllerID(0L);
-			controller.setTargetType((byte) 1);	// 场景
-			controller.setTargetID(scene.getSceneID());
-			Timestamp tsNow = Timestamp.valueOf(LocalDateTime.now());
-			controller.setGenTime(tsNow);
-			controller.setRunTime(tsNow);
-			controller.setSource(source);
-			controller.setRunCode("0");
-			controller.setRunResult(0);
-			controller = VirtualFsuUtil.virtualFsuService.addOrUpdateControllerResult(controller);
-			// 提交执行
-			boolean bret = doSceneControl(controller);
-			if(!bret) {	// 提交执行失败
-				controller.setRunCode("1");
-				controller = VirtualFsuUtil.virtualFsuService.addOrUpdateControllerResult(controller);
-			}
-		} catch(Exception e) {
-			controller = null;
-			e.printStackTrace();
-		}
-		return controller;
-	}
+    /**
+     * 场景执行。
+     *
+     * @param scene  场景。
+     * @param source 来源(0=远程执行;1=定时执行)。
+     * @return 返回对应的Controller记录。null表示失败。
+     */
+    public Controller sceneControl(final Scene scene, byte source) {
+        if (scene == null ||
+                (source != 0 && source != 1))
+            return null;
+        Controller controller = null;
+        try {
+            // 生成对应的Controller记录。
+            controller = new Controller();
+            controller.setControllerID(0L);
+            controller.setTargetType((byte) 1);    // 场景
+            controller.setTargetID(scene.getSceneID());
+            Timestamp tsNow = Timestamp.valueOf(LocalDateTime.now());
+            controller.setGenTime(tsNow);
+            controller.setRunTime(tsNow);
+            controller.setSource(source);
+            controller.setRunCode("0");
+            controller.setRunResult(0);
+            controller = VirtualFsuUtil.virtualFsuService.addOrUpdateControllerResult(controller);
+            // 提交执行
+            boolean bret = doSceneControl(controller);
+            if (!bret) {    // 提交执行失败
+                controller.setRunCode("1");
+                controller = VirtualFsuUtil.virtualFsuService.addOrUpdateControllerResult(controller);
+            }
+        } catch (Exception e) {
+            controller = null;
+            e.printStackTrace();
+        }
+        return controller;
+    }
 
-	/**
-	 * 断路器控制。
-	 * @param controller 控制命令对象。
-	 * @return 成功与否。
-	 */
-	private static boolean doBreakerControl(Controller controller, final Switch swt) {
-		try {
-			LocalDateTime now = LocalDateTime.now();
-			long codeValueBreaker = Long.parseLong(swt.getCode(), 16);
-			// 获取断路器对应的集中器
-			Long codeValueCollector;
-			try {
-				codeValueCollector = Long.parseLong(swt.getCollector().getCode(), 16);
-			} catch(Exception e) {
-				codeValueCollector = null;
-			}
-			if(codeValueCollector == null) {
-				System.out.printf("[%s] doBreakerControl - Failed to get Collector of Breaker(%012X)\n",
-						now,
-						codeValueBreaker);
-				return false;
-			}
-			// 获取集中器信息对象
-			CollectorInfo collectorInfo = VirtualFsuCollectorInfo.getCollectorInfo(codeValueCollector);
-			if(collectorInfo == null) {
-				System.out.printf("[%s] doBreakerControl - Failed to get CollectorInfo of Collector(%012X)\n",
-						now,
-						codeValueCollector);
-				return false;
-			}
-			// 获取集中器对应的连接
-			ChannelHandlerContext ctx = collectorInfo.getChannelHandlerContext();
-			if(ctx == null) {
-				System.out.printf("[%s] doBreakerControl - Failed to get Socket of Collector(%012X)\n",
-						now,
-						codeValueCollector);
-				return false;
-			}
-			// 发送命令
-			//return doBreakerControl(controller, swt, controller.getCmdData(), collectorInfo);
-			if(0 == collectorCommandExecutor.addCommand(
-					codeValueBreaker, swt.getSwitchID(),
-					codeValueCollector, swt.getCollector().getCollectorID(),
-					controller.getCmdData(), controller.getControllerID()))
-				return true;
-			else
-				return false;
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
+    /**
+     * 断路器控制。
+     *
+     * @param controller 控制命令对象。
+     * @return 成功与否。
+     */
+    private boolean doBreakerControl(Controller controller, final Switch swt) {
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            long codeValueBreaker = Long.parseLong(swt.getCode(), 16);
+            // 获取断路器对应的集中器
+            Long codeValueCollector;
+            try {
+                codeValueCollector = Long.parseLong(swt.getCollector().getCode(), 16);
+            } catch (Exception e) {
+                codeValueCollector = null;
+            }
+            if (codeValueCollector == null) {
+                System.out.printf("[%s] doBreakerControl - Failed to get Collector of Breaker(%012X)\n",
+                        now,
+                        codeValueBreaker);
+                return false;
+            }
+            // 获取集中器信息对象
+            CollectorInfo collectorInfo = VirtualFsuCollectorInfo.getCollectorInfo(codeValueCollector);
+            if (collectorInfo == null) {
+                System.out.printf("[%s] doBreakerControl - Failed to get CollectorInfo of Collector(%012X)\n",
+                        now,
+                        codeValueCollector);
+                return false;
+            }
+            // 获取集中器对应的连接
+            ChannelHandlerContext ctx = collectorInfo.getChannelHandlerContext();
+            if (ctx == null) {
+                System.out.printf("[%s] doBreakerControl - Failed to get Socket of Collector(%012X)\n",
+                        now,
+                        codeValueCollector);
+                return false;
+            }
+            // 发送命令
+            //return doBreakerControl(controller, swt, controller.getCmdData(), collectorInfo);
+            if (0 == collectorCommandExecutor.addCommand(
+                    codeValueBreaker, swt.getSwitchID(),
+                    codeValueCollector, swt.getCollector().getCollectorID(),
+                    controller.getCmdData(), controller.getControllerID()))
+                return true;
+            else
+                return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	/**
-	 * 场景控制。
-	 * @param controller 控制命令对象。
-	 * @return 发送成功与否。
-	 */
-	private static boolean doSceneControl(Controller controller) {
-		int count = 0;
-		try {
-			List<SceneSwitch> sceneSwitchs = VirtualFsuUtil.virtualFsuService.findSceneSwitchsBySceneID(controller.getTargetID());
-			if(sceneSwitchs.isEmpty()) {
-				System.out.printf("[%s] doSceneControl(%s) - empty sceneSwitchs.\n",
-						LocalDateTime.now().toString(),
-						controller.getControllerID());
-				return false;
-			}
-			Switch swt;
-			long codeValueBreaker;
-			Long codeValueCollector;
-			LocalDateTime now;
-			for(SceneSwitch sceneSwitch : sceneSwitchs) {
-				now = LocalDateTime.now();
-				swt = sceneSwitch.getSwitchs();
-				if(swt == null)
-					continue;
-				codeValueBreaker = Long.parseLong(swt.getCode(), 16);
-				// 获取断路器对应的集中器
-				try {
-					codeValueCollector = Long.parseLong(swt.getCollector().getCode(), 16);
-				} catch(Exception e) {
-					codeValueCollector = null;
-				}
-				if(codeValueCollector == null) {
-					System.out.printf("[%s] doSceneControl(%s) - Failed to get Collector of Breaker(%012X)\n",
-							now,
-							controller.getControllerID(),
-							codeValueBreaker);
-					continue;
-				}
-				// 获取集中器信息对象
-				CollectorInfo collectorInfo = VirtualFsuCollectorInfo.getCollectorInfo(codeValueCollector);
-				if(collectorInfo == null) {
-					System.out.printf("[%s] doSceneControl - Failed to get CollectorInfo of Collector(%012X)\n",
-							now,
-							codeValueCollector);
-					continue;
-				}
-				// 获取集中器对应的连接
-				ChannelHandlerContext ctx = collectorInfo.getChannelHandlerContext();
-				if(ctx == null) {
-					System.out.printf("[%s] doSceneControl - Failed to get Socket of Collector(%012X)\n",
-							now,
-							codeValueCollector);
-					continue;
-				}
-				if(0 == collectorCommandExecutor.addCommand(
-						codeValueBreaker, swt.getSwitchID(),
-						codeValueCollector, swt.getCollector().getCollectorID(),
-						sceneSwitch.getCmdData(), controller.getControllerID()))
-					count++;
-			}
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-		return count > 0;
-	}
+    /**
+     * 场景控制。
+     *
+     * @param controller 控制命令对象。
+     * @return 发送成功与否。
+     */
+    private boolean doSceneControl(Controller controller) {
+        int count = 0;
+        try {
+            List<SceneSwitch> sceneSwitchs = VirtualFsuUtil.virtualFsuService.findSceneSwitchsBySceneID(controller.getTargetID());
+            if (sceneSwitchs.isEmpty()) {
+                System.out.printf("[%s] doSceneControl(%s) - empty sceneSwitchs.\n",
+                        LocalDateTime.now().toString(),
+                        controller.getControllerID());
+                return false;
+            }
+            Switch swt;
+            long codeValueBreaker;
+            Long codeValueCollector;
+            LocalDateTime now;
+            for (SceneSwitch sceneSwitch : sceneSwitchs) {
+                now = LocalDateTime.now();
+                swt = sceneSwitch.getSwitchs();
+                if (swt == null)
+                    continue;
+                codeValueBreaker = Long.parseLong(swt.getCode(), 16);
+                // 获取断路器对应的集中器
+                try {
+                    codeValueCollector = Long.parseLong(swt.getCollector().getCode(), 16);
+                } catch (Exception e) {
+                    codeValueCollector = null;
+                }
+                if (codeValueCollector == null) {
+                    System.out.printf("[%s] doSceneControl(%s) - Failed to get Collector of Breaker(%012X)\n",
+                            now,
+                            controller.getControllerID(),
+                            codeValueBreaker);
+                    continue;
+                }
+                // 获取集中器信息对象
+                CollectorInfo collectorInfo = VirtualFsuCollectorInfo.getCollectorInfo(codeValueCollector);
+                if (collectorInfo == null) {
+                    System.out.printf("[%s] doSceneControl - Failed to get CollectorInfo of Collector(%012X)\n",
+                            now,
+                            codeValueCollector);
+                    continue;
+                }
+                // 获取集中器对应的连接
+                ChannelHandlerContext ctx = collectorInfo.getChannelHandlerContext();
+                if (ctx == null) {
+                    System.out.printf("[%s] doSceneControl - Failed to get Socket of Collector(%012X)\n",
+                            now,
+                            codeValueCollector);
+                    continue;
+                }
+                if (0 == collectorCommandExecutor.addCommand(
+                        codeValueBreaker, swt.getSwitchID(),
+                        codeValueCollector, swt.getCollector().getCollectorID(),
+                        sceneSwitch.getCmdData(), controller.getControllerID()))
+                    count++;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return count > 0;
+    }
 
-	/**
-	 * 发送断路器开合命令。
-	 * @param cmdData 0=断开;1=合闸。
-	 * @param codeValueBreaker 断路器地址值。
-	 * @param encrypt 数据加密方式。
-	 * @param key 数据加密密钥。
-	 * @ctx 对应的连接。
-	 * @return 命令发送成功与否。
-	 */
-	public static boolean switchOnOff(int cmdData, long codeValueBreaker, int encrypt, final byte[] key, ChannelHandlerContext ctx) {
-		try {
-			MessageBodyBreakerControl body = new MessageBodyBreakerControl();
-			body.setBrkCode(codeValueBreaker);
-			body.setOn(cmdData == 0 ? false : true);
-			byte[] bodyBytes = body.getBytes();
-			if((encrypt & 0x02) > 0)	// AES
-				bodyBytes = Aes128.cfb8(key, 1, bodyBytes);
-			Message mm = new Message();
-			mm.setId(0x0301);
-			mm.setSerialno(VirtualFsuUtil.serialNo.getAndIncrement());
-			mm.wrapBody(bodyBytes);
-			mm.setBodyLength(bodyBytes.length);
-			mm.setEncrypt(encrypt);
-			mm.setChecksum(mm.calcChecksum());
-			byte[] mmBytes = mm.getBytes(VirtualFsuUtil.BYTEORDER, true);
-			if(mmBytes != null) {
-				writeAndFlush(mmBytes, ctx);
-				return true;
-			}
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-		return false;
-	}
+    /**
+     * 发送断路器开合命令。
+     *
+     * @param cmdData          0=断开;1=合闸。
+     * @param codeValueBreaker 断路器地址值。
+     * @param encrypt          数据加密方式。
+     * @param key              数据加密密钥。
+     * @return 命令发送成功与否。
+     * @ctx 对应的连接。
+     */
+    public static boolean switchOnOff(int cmdData, long codeValueBreaker, int encrypt, final byte[] key, ChannelHandlerContext ctx) {
+        try {
+            MessageBodyBreakerControl body = new MessageBodyBreakerControl();
+            body.setBrkCode(codeValueBreaker);
+            body.setOn(cmdData == 0 ? false : true);
+            byte[] bodyBytes = body.getBytes();
+            if ((encrypt & 0x02) > 0)    // AES
+                bodyBytes = Aes128.cfb8(key, 1, bodyBytes);
+            Message mm = new Message();
+            mm.setId(0x0301);
+            mm.setSerialno(VirtualFsuUtil.serialNo.getAndIncrement());
+            mm.wrapBody(bodyBytes);
+            mm.setBodyLength(bodyBytes.length);
+            mm.setEncrypt(encrypt);
+            mm.setChecksum(mm.calcChecksum());
+            byte[] mmBytes = mm.getBytes(VirtualFsuUtil.BYTEORDER, true);
+            if (mmBytes != null) {
+                writeAndFlush(mmBytes, ctx);
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
     /**
      * 设置断路器过压阀值。
@@ -1581,8 +1588,8 @@ public class VirtualFsuController {
             long clctCodeValue = Long.parseLong(collector.getCode(), 16);
             MessageBodyWork body = new MessageBodyWork();
             body.setClctCode(clctCodeValue);
-			body.setIp(collector.getServer().getIp());
-			body.setPort(collector.getServer().getPort());
+            body.setIp(collector.getServer().getIp());
+            body.setPort(collector.getServer().getPort());
 //			System.out.printf("MessageBodyWork = %s\n", body.toString());
             byte[] bodyBytes = body.getBytes(VirtualFsuUtil.BYTEORDER);
             bodyBytes = Aes128.cfb8(VirtualFsuUtil.CONFIG_KEY, 1, bodyBytes);

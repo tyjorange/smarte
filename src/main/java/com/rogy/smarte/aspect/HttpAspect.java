@@ -19,7 +19,7 @@ import java.util.Objects;
 @Component
 public class HttpAspect {
     private final static Logger logger = LoggerFactory.getLogger(HttpAspect.class);
-    private boolean DEBUG = true;
+    private boolean DEBUG = false;
 
     //表示DogController.dogList(..)所有[dogList]参数被拦截
     //表示DogController.*(..)所有[方法]参数被拦截

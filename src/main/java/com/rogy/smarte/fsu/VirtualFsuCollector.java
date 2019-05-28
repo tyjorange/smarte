@@ -8,13 +8,14 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.LocalDateTime;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
 
 /**
  * 集中器采集服务类。
  */
-public class VirtualFsuCollector implements Runnable {
+@Component
+public class VirtualFsuCollector{
     private final static Logger logger = LoggerFactory.getLogger(VirtualFsuCollector.class);
 
     public static final int FSU_PORT = 55555;
@@ -42,8 +43,9 @@ public class VirtualFsuCollector implements Runnable {
         this.port = port;
     }
 
-    @Override
-    public void run() {
+    @Async
+    public void asyncRun(String threadName) {
+        Thread.currentThread().setName(threadName);
 //        System.out.printf("[%s] Collector service start...\n", LocalDateTime.now());
         logger.info(" Collector service start...");
         // 稍微等待

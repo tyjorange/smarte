@@ -30,17 +30,17 @@ public class VirtualFsuUtil {
 	/**
 	 * 调度任务执行线程池。
 	 */
-	public static ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-	public static void shutdownScheduledExcutorService() {
-		scheduledExecutorService.shutdown();
-	}
+//	public static ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+//	public static void shutdownScheduledExcutorService() {
+//		scheduledExecutorService.shutdown();
+//	}
 	/**
 	 * 任务执行线程池。
 	 */
-	public static ExecutorService executorService = Executors.newCachedThreadPool();
-	public static void shutdownExcutorService() {
-		executorService.shutdown();
-	}
+//	public static ExecutorService executorService = Executors.newCachedThreadPool();
+//	public static void shutdownExcutorService() {
+//		executorService.shutdown();
+//	}
 
 	/**
 	 * SignalsType记录。

@@ -1,34 +1,5 @@
 package com.rogy.smarte.service.impl;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStreamReader;
-import java.math.BigInteger;
-import java.net.URL;
-import java.net.URLConnection;
-import java.sql.Date;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.text.NumberFormat;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
-import javax.annotation.Resource;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
 import com.rogy.smarte.controller.app.BaseWS.WSCode;
 import com.rogy.smarte.entity.db1.*;
 import com.rogy.smarte.fsu.VirtualFsuController;
@@ -39,12 +10,34 @@ import com.rogy.smarte.util.PowerManagerUtil;
 import com.rogy.smarte.util.SendMessage;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
-import org.apache.commons.io.FileUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.math.BigInteger;
+import java.net.URL;
+import java.net.URLConnection;
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.text.NumberFormat;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 public class AppClientServiceImpl implements IAppClientService {
@@ -54,7 +47,8 @@ public class AppClientServiceImpl implements IAppClientService {
 	private int version = 10;
 	@PersistenceContext(unitName = "EntityManagerFactoryBean_1")
 	private EntityManager entityManager;
-
+	@Autowired
+	VirtualFsuController virtualFsuController;
 	@Resource
 	private HttpServletRequest request;
 	@Resource
@@ -703,7 +697,7 @@ public class AppClientServiceImpl implements IAppClientService {
 				switchs.getCollector().getCollectorID());
 		if (ucs == null || ucs.isEmpty())
 			return null;
-		Controller controller = VirtualFsuController.switchControl(switchs, Byte.valueOf(cmdData), (byte) 0);
+		Controller controller = virtualFsuController.switchControl(switchs, Byte.valueOf(cmdData), (byte) 0);
 		if (controller == null)
 			return null;
 		JSONObject jo = new JSONObject();
@@ -1277,7 +1271,7 @@ public class AppClientServiceImpl implements IAppClientService {
 		List<Scene> scenes = sceneDao.findBySceneID(Integer.valueOf(sceneID));
 		if (scenes == null || scenes.isEmpty())
 			return WSCode.WRONG_PARAMETER_VALUE;
-		Controller controller = VirtualFsuController.sceneControl(scenes.get(0), (byte) 0);
+		Controller controller = virtualFsuController.sceneControl(scenes.get(0), (byte) 0);
 		if (controller == null)
 			return WSCode.FAILED;
 		else

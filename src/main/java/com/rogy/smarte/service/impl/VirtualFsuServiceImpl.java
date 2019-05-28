@@ -19,6 +19,8 @@ import com.rogy.smarte.fsu.VirtualFsuController;
 import com.rogy.smarte.fsu.VirtualFsuUtil;
 import com.rogy.smarte.fsu.ZDataValue;
 import com.rogy.smarte.repository.db1.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,9 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 import static com.rogy.smarte.repository.db1.ZDataDao.TIMEFORMAT;
 
 
-@Service
+@Component
 public class VirtualFsuServiceImpl {
-
+    @Autowired
+    VirtualFsuController virtualFsuController;
     @Resource
     private CollectorDao collectorDao;
     @Resource
@@ -75,11 +78,11 @@ public class VirtualFsuServiceImpl {
     private UserCollectorDao userCollectorDao;
 
     public UserCollector findUserCollectorByCollectorID(Integer collectorID) throws Exception {
-    	List<UserCollector> ucs = userCollectorDao.findByCollectorID(collectorID);
-    	if(ucs.isEmpty())
-    		return null;
-    	else
-    		return ucs.get(0);
+        List<UserCollector> ucs = userCollectorDao.findByCollectorID(collectorID);
+        if (ucs.isEmpty())
+            return null;
+        else
+            return ucs.get(0);
     }
 
     public List<DeviceAlarm> findByTime(Timestamp time) throws Exception {
@@ -92,11 +95,11 @@ public class VirtualFsuServiceImpl {
 
     public SignalHour findSignalHourBySwitchAndTypeAndHour(Integer switchID, Date time,
                                                            int hour, Short signalsTypeID) throws Exception {
-    	List<SignalHour> shs = signalHourDao.findBySwitchAndTypeAndHour(switchID, signalsTypeID, time, hour);
-    	if(shs.isEmpty())
-    		return null;
-    	else
-    		return shs.get(0);
+        List<SignalHour> shs = signalHourDao.findBySwitchAndTypeAndHour(switchID, signalsTypeID, time, hour);
+        if (shs.isEmpty())
+            return null;
+        else
+            return shs.get(0);
     }
 
     public int addOrUpdateSignalHour(Integer switchID, Short signalsTypeID, LocalDate date, int hour, double statistik, double value)
@@ -117,31 +120,31 @@ public class VirtualFsuServiceImpl {
     }
 
     public TimeController findTimeControllerByID(Long timeControllerID) throws Exception {
-    	List<TimeController> tcs = timeControllerDao.findByTimeControllerID(timeControllerID);
-    	if(tcs.isEmpty())
-    		return null;
-    	else
-    		return tcs.get(0);
+        List<TimeController> tcs = timeControllerDao.findByTimeControllerID(timeControllerID);
+        if (tcs.isEmpty())
+            return null;
+        else
+            return tcs.get(0);
     }
-    
+
     public List<TimeController> findTimeControllerByIDList(String list) throws Exception {
-    	return timeControllerImpl.findByIDList(list);
+        return timeControllerImpl.findByIDList(list);
     }
 
     public Controller findController(Long controllerID) throws Exception {
-    	List<Controller> cs = controllerDao.findByControllerID(controllerID);
-    	if(cs.isEmpty())
-    		return null;
-    	else
-    		return cs.get(0);
+        List<Controller> cs = controllerDao.findByControllerID(controllerID);
+        if (cs.isEmpty())
+            return null;
+        else
+            return cs.get(0);
     }
 
     public Controller findControllerWithClear(Long controllerID) throws Exception {
-    	List<Controller> cs = controllerDao.findByControllerIDWithClear(controllerID);
-    	if(cs.isEmpty())
-    		return null;
-    	else
-    		return cs.get(0);
+        List<Controller> cs = controllerDao.findByControllerIDWithClear(controllerID);
+        if (cs.isEmpty())
+            return null;
+        else
+            return cs.get(0);
     }
 
     public List<Switch> findAllSwitch() throws Exception {
@@ -149,19 +152,19 @@ public class VirtualFsuServiceImpl {
     }
 
     public Switch findSwitchBySwitchID(Integer switchID) throws Exception {
-    	List<Switch> ss = switchDao.findBySwitchID(switchID);
-    	if(ss.isEmpty())
-    		return null;
-    	else
-    		return ss.get(0);
+        List<Switch> ss = switchDao.findBySwitchID(switchID);
+        if (ss.isEmpty())
+            return null;
+        else
+            return ss.get(0);
     }
 
     public Switch findSwitchBySwitchCode(String switchCode) throws Exception {
-    	List<Switch> ss = switchDao.findByCode(switchCode);
-    	if(ss.isEmpty())
-    		return null;
-    	else
-    		return ss.get(0);
+        List<Switch> ss = switchDao.findByCode(switchCode);
+        if (ss.isEmpty())
+            return null;
+        else
+            return ss.get(0);
     }
 
     public List<Switch> findSwitchByCollectorID(Integer collectorID)
@@ -189,20 +192,20 @@ public class VirtualFsuServiceImpl {
 
     public SignalsNew findSignalsNewBySwitchIDAndSignalsTypeID(Integer switchID,
                                                                Short signalsTypeID) throws Exception {
-    	List<SignalsNew> sns = signalsNewDao.findBySwitchIDAndSignalsTypeID(switchID,signalsTypeID);
-    	if(sns.isEmpty())
-    		return null;
-    	else
-    		return sns.get(0);
+        List<SignalsNew> sns = signalsNewDao.findBySwitchIDAndSignalsTypeID(switchID, signalsTypeID);
+        if (sns.isEmpty())
+            return null;
+        else
+            return sns.get(0);
     }
 
     public SwitchParam findSwitchParamBySwitchIDParamID(Integer switchID,
                                                         Integer paramID) throws Exception {
-    	List<SwitchParam> sps = switchParamDao.findBySwitchIDParamID(switchID, paramID);
-    	if(sps.isEmpty())
-    		return null;
-    	else
-    		return sps.get(0);
+        List<SwitchParam> sps = switchParamDao.findBySwitchIDParamID(switchID, paramID);
+        if (sps.isEmpty())
+            return null;
+        else
+            return sps.get(0);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = {
@@ -213,26 +216,26 @@ public class VirtualFsuServiceImpl {
     }
 
     public Controller findRun(int runId, int runNo) throws Exception {
-    	List<Controller> cs = controllerDao.findRun(runId, runNo);
-    	if (cs == null || cs.isEmpty())
-    		return null;
+        List<Controller> cs = controllerDao.findRun(runId, runNo);
+        if (cs == null || cs.isEmpty())
+            return null;
         return cs.get(0);
     }
 
     public Collector findCollectorByID(Integer collectorID) throws Exception {
-    	List<Collector> cs = collectorDao.findByCollectorID(collectorID);
-    	if(cs.isEmpty())
-    		return null;
-    	else
-    		return cs.get(0);
+        List<Collector> cs = collectorDao.findByCollectorID(collectorID);
+        if (cs.isEmpty())
+            return null;
+        else
+            return cs.get(0);
     }
 
     public Collector findCollectorByCode(String collectorCode) throws Exception {
-    	List<Collector> cs = collectorDao.findByCollectorCode(collectorCode);
-    	if(cs.isEmpty())
-    		return null;
-    	else
-    		return cs.get(0);
+        List<Collector> cs = collectorDao.findByCollectorCode(collectorCode);
+        if (cs.isEmpty())
+            return null;
+        else
+            return cs.get(0);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = {
@@ -260,35 +263,35 @@ public class VirtualFsuServiceImpl {
     }
 
     public CollectorTimerUpload findTimerUploadByCollectorCodeAndMsg(String code, int msgId, int msgNo) throws Exception {
-    	List<CollectorTimerUpload> ctus = collectorTimerUploadDao.findByCollectorCodeAndMsg(code, msgId, msgNo);
-    	if(ctus.isEmpty())
-    		return null;
-    	else
-    		return ctus.get(0);
+        List<CollectorTimerUpload> ctus = collectorTimerUploadDao.findByCollectorCodeAndMsg(code, msgId, msgNo);
+        if (ctus.isEmpty())
+            return null;
+        else
+            return ctus.get(0);
     }
 
     public CollectorTimerUpload findTimerUploadByCollectorID(Integer collectorID) throws Exception {
-    	List<CollectorTimerUpload> ctus = collectorTimerUploadDao.findByCollectorID(collectorID);
-    	if(ctus.isEmpty())
-    		return null;
-    	else
-    		return ctus.get(0);
+        List<CollectorTimerUpload> ctus = collectorTimerUploadDao.findByCollectorID(collectorID);
+        if (ctus.isEmpty())
+            return null;
+        else
+            return ctus.get(0);
     }
 
     public CollectorRTC findRTCByCollectorCode(String code) throws Exception {
-    	List<CollectorRTC> crtcs = collectorRTCDao.findByCollectorCode(code);
-    	if(crtcs.isEmpty())
-    		return null;
-    	else
-    		return crtcs.get(0);
+        List<CollectorRTC> crtcs = collectorRTCDao.findByCollectorCode(code);
+        if (crtcs.isEmpty())
+            return null;
+        else
+            return crtcs.get(0);
     }
 
     public CollectorRTC findRTCByCollectorID(Integer collectorID) throws Exception {
-    	List<CollectorRTC> crtcs = collectorRTCDao.findByCollectorID(collectorID);
-    	if(crtcs.isEmpty())
-    		return null;
-    	else
-    		return crtcs.get(0);
+        List<CollectorRTC> crtcs = collectorRTCDao.findByCollectorID(collectorID);
+        if (crtcs.isEmpty())
+            return null;
+        else
+            return crtcs.get(0);
     }
 
     public List<CollectorTimerUpload> findNoResultBefore(Timestamp beforeTime) throws Exception {
@@ -412,14 +415,14 @@ public class VirtualFsuServiceImpl {
             ApexDay ad;
             if (zDataValue.dayId <= 0) {    // 该断路器的该SignalType的日最大最小数据在Cache中不存在。
                 // 查找该日的记录。
-            	List<ApexDay> ads = apexDayDao.findBySwitchAndSignalsTypeAndTime(switchID, signalsTypeID, dtDate);
-            	if(!ads.isEmpty()) {
-	                ad = ads.get(0);
+                List<ApexDay> ads = apexDayDao.findBySwitchAndSignalsTypeAndTime(switchID, signalsTypeID, dtDate);
+                if (!ads.isEmpty()) {
+                    ad = ads.get(0);
                     zDataValue.dayId = ad.getId();
                     zDataValue.dayTimeMs = ad.getTime().getTime();
                     zDataValue.dayMax = ad.getMaxDay();
                     zDataValue.dayMin = ad.getMinDay();
-            	}
+                }
             }
             LocalDate dayTime = null;
             if (zDataValue.dayId > 0) {    // 从毫秒值得到对象。
@@ -468,7 +471,7 @@ public class VirtualFsuServiceImpl {
             ApexMonth am;
             if (zDataValue.monthId <= 0) {    // 该断路器的该SignalType的月最大最小数据在Cache中不存在。
                 // 查找该月的记录。
-            	List<ApexMonth> ams = apexMonthDao.findBySwitchAndSignalsTypeAndTime(switchID, signalsTypeID, year, month);
+                List<ApexMonth> ams = apexMonthDao.findBySwitchAndSignalsTypeAndTime(switchID, signalsTypeID, year, month);
                 if (!ams.isEmpty()) {
                     am = ams.get(0);
                     zDataValue.monthId = am.getId();
@@ -603,13 +606,13 @@ public class VirtualFsuServiceImpl {
         int hour = time.getHour();
         int minute = time.getMinute();
         // 发起控制
-        Controller controller = VirtualFsuController.switchControl(timeController.getSwitchs(), timeController.getCmdData(), (byte) 1);
+        Controller controller = virtualFsuController.switchControl(timeController.getSwitchs(), timeController.getCmdData(), (byte) 1);
         if (controller != null) {    // 控制发送成功
             if (timeController.getWeekday() == 0) { // 非重复
                 timeController.setState((byte) 0);
                 timeControllerDao.saveAndFlush(timeController);
                 // 停止服务器定时执行项。
-                VirtualFsuController.breakerTimerExecutor.removeTimer(timeController.getId(), hour, minute);
+                virtualFsuController.breakerTimerExecutor.removeTimer(timeController.getId(), hour, minute);
             }
         } else {    // 控制发送失败
             System.out.printf("[%s] doTimeBreakerController(%s) failed.",
@@ -680,7 +683,7 @@ public class VirtualFsuServiceImpl {
             collectorException.setExcpdate(dateNow);
             collectorException.setExcpcount(1);
         } else {
-        	collectorException = ces.get(0);
+            collectorException = ces.get(0);
             collectorException.setExcpcount(collectorException.getExcpcount() + 1);
         }
         return collectorExceptionDao.saveAndFlush(collectorException);
@@ -708,7 +711,7 @@ public class VirtualFsuServiceImpl {
             collectorException.setExcpdate(dateNow);
             collectorException.setExcpcount(1);
         } else {
-        	collectorException = ces.get(0);
+            collectorException = ces.get(0);
             collectorException.setExcpcount(collectorException.getExcpcount() + 1);
         }
         return collectorExceptionDao.saveAndFlush(collectorException);

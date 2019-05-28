@@ -3,11 +3,14 @@ package com.rogy.smarte.fsu;
 
 import com.rogy.smarte.entity.db1.Collector;
 import com.rogy.smarte.entity.db1.CollectorTraffic;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
-public class CollectorTrafficRunnable implements Runnable {
+@Component
+public class CollectorTrafficRunnable {
 	private void traffic(CollectorInfo collectorInfo) {
 		try {
 			LocalDateTime now = LocalDateTime.now();
@@ -29,11 +32,11 @@ public class CollectorTrafficRunnable implements Runnable {
 		}
 	}
 
-	@Override
-	public void run() {
+	@Scheduled(cron = "0 0/5 * * * ? ")
+	public void doSchedule() {
 		try {
 			Thread.currentThread().setName("PM_CollectorTraffic");
-			VirtualFsuCollectorInfo.collectorInfos.entrySet().stream().forEach(e -> traffic(e.getValue()));
+			VirtualFsuCollectorInfo.collectorInfos.forEach((key, value) -> traffic(value));
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

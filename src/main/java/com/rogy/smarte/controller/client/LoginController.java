@@ -159,7 +159,10 @@ public class LoginController {
 
     @CrossOrigin
     @RequestMapping(value = "/AppClientAction_miniLogin.do", method = RequestMethod.GET)
-    public void loginByOpenId(String js_code) {
+    public void loginByOpenId(String js_code, String enc, String iv) {
+        System.out.println(js_code);
+        System.out.println(enc);
+        System.out.println(iv);
 
         final String fuwuAppid = "wx718ec2dbc3762994";
         final String fuwuSecret = "44896e5be0d36b1bb8891d9082d9987c";
@@ -186,6 +189,8 @@ public class LoginController {
         }
         String r = response.getBody();
         JSONObject body = JSONObject.parseObject(r);
+        System.out.println("1 " + body);
+
         if ((Integer) body.get("errcode") != null) {
             logger.error("请求成功，但是获取openId失败，错误码：" + body);
         }
@@ -209,6 +214,8 @@ public class LoginController {
                     logger.error("请求失败，获取access_token失败");
                 }
                 Map body2 = response2.getBody();
+                System.out.println("2 " + body2);
+
                 if ((Integer) Objects.requireNonNull(body2).get("errcode") != null) {
                     logger.error("请求成功，但是获取access_token失败，错误码：" + body2.get("errcode"));
                 }
@@ -222,6 +229,7 @@ public class LoginController {
 
 
             }
+            System.out.println(access_token);
         }
 
         //获取unionId
@@ -231,12 +239,13 @@ public class LoginController {
             logger.error("请求失败，获取UnionId失败");
         }
         String s = response1.getBody();
-        JSONObject body1 = JSONObject.parseObject(s);
+        JSONObject body3 = JSONObject.parseObject(s);
+        System.out.println("3 " + body3);
 
-        if ((Integer) body1.get("errcode") != null) {
-            logger.error("请求成功，但是获取UnionId失败，错误码：" + body1);
+        if ((Integer) body3.get("errcode") != null) {
+            logger.error("请求成功，但是获取UnionId失败，错误码：" + body3);
         }
-        UnionID = (String) body1.get("unionid");
+        UnionID = (String) body3.get("unionid");
         //返回前端数据
         HashMap<String, Object> map = new HashMap<>();
         map.put("UnionID", UnionID);
